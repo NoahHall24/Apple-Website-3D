@@ -7,28 +7,52 @@ Title: Apple iPhone 15 Pro Max Black
 */
 
 import * as THREE from 'three';
-import React, { useEffect, useRef } from 'react'
+import React, { useEffect, useMemo } from 'react'
 import { useGLTF, useTexture } from '@react-three/drei'
 
 function Model(props) {
-  const { nodes, materials } = useGLTF("/models/scene.glb");
+  const { nodes, materials } = useGLTF(`${import.meta.env.BASE_URL}models/scene.glb`);
+  
+  // Use useTexture at the top level
+  const texture = useTexture(`${import.meta.env.BASE_URL}assets/images/${props.item.img}`);
 
-  const texture = useTexture(props.item.img);
+  // Console log for debugging
+  console.log('Texture path:', `${import.meta.env.BASE_URL}assets/images/${props.item.img}`);
+
   useEffect(() => {
-    Object.entries(materials).map((material) => {
-      // these are the material names that can't be changed color
+    Object.entries(materials).forEach(([key, material]) => {
       if (
-        material[0] !== "zFdeDaGNRwzccye" &&
-        material[0] !== "ujsvqBWRMnqdwPx" &&
-        material[0] !== "hUlRcbieVuIiOXG" &&
-        material[0] !== "jlzuBkUzuJqgiAK" &&
-        material[0] !== "xNrofRCqOXXHVZt"
+        key !== "zFdeDaGNRwzccye" &&
+        key !== "ujsvqBWRMnqdwPx" &&
+        key !== "hUlRcbieVuIiOXG" &&
+        key !== "jlzuBkUzuJqgiAK" &&
+        key !== "xNrofRCqOXXHVZt"
       ) {
-        material[1].color = new THREE.Color(props.item.color[0]);
+        material.color = new THREE.Color(props.item.color[0]);
       }
-      material[1].needsUpdate = true;
+      material.needsUpdate = true;
     });
-  }, [materials, props.item]);
+  }, [materials, props.item.color]);
+
+  // Memoize the meshes to prevent unnecessary re-renders
+  const meshes = useMemo(() => (
+    <>
+      {/* ... other meshes ... */}
+      <mesh
+        castShadow
+        receiveShadow
+        geometry={nodes.xXDHkMplTIDAXLN.geometry}
+        scale={0.01}
+      >
+        <meshStandardMaterial 
+          roughness={1} 
+          map={texture} 
+          color={texture ? undefined : props.item.color[0]} // Fallback color if texture not loaded
+        />
+      </mesh>
+      {/* ... other meshes ... */}
+    </>
+  ), [nodes, texture, props.item.color]);
 
   return (
     <group {...props} dispose={null}>
@@ -258,4 +282,4 @@ function Model(props) {
 
 export default Model;
 
-useGLTF.preload('/models/scene.glb')
+useGLTF.preload(`${import.meta.env.BASE_URL}models/scene.glb`)
